@@ -36,8 +36,9 @@ let package = Package(
         /// InAppChat
         .target(
             name: "InAppChat",
-            dependencies: ["MobileMessaging",
-                .product(name: "SwiftJWT", package: "Swift-JWT")
+            dependencies: [
+                "MobileMessaging",
+                .package(url: "https://github.com/Kitura/Swift-JWT/Swift-JWT.git", from: "4.0.0")
             ],
             path: "Classes/Chat",
             resources: [.copy("Resources/ChatConnector.html"), .process("Resources/MobileMessagingChatImages.xcassets")]
@@ -47,7 +48,7 @@ let package = Package(
             name: "WebRTCUI",
             dependencies: [
                 "MobileMessaging",
-                .product(name: "InfobipRTC", package: "infobip-rtc-ios")
+                .package(url: "https://github.com/infobip/infobip-rtc-ios/infobip-rtc-ios.git", from: "2.0.20")
             ],
             path: "Classes/WebRTCUI",
             resources: [.process("Resources")],
