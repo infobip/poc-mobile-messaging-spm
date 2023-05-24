@@ -51,6 +51,7 @@ let package = Package(
             dependencies: [
                 "MobileMessaging",
                 .product(name: "InfobipRTC", package: "infobip-rtc-ios"),
+                .product(name: "WebRTC", package: "infobip-rtc-ios")
             ],
             path: "Classes/WebRTCUI",
             resources: [.process("Resources")],
