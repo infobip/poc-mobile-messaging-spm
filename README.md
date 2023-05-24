@@ -1,3 +1,5 @@
+Note: Proof of concept of Mobile Messaging iOS SDK with Swift Package support. Only InAppChat and WebRTCUI are included. Not for production use.
+
 # Mobile Messaging SDK for iOS
 
 [![Version](https://img.shields.io/cocoapods/v/MobileMessaging.svg?style=flat)](http://cocoapods.org/pods/MobileMessaging)
@@ -23,35 +25,18 @@ This guide is designed to get you up and running with Mobile Messaging SDK integ
     2. Turn on Background Modes and check the Remote notifications checkbox.
     <img src="https://github.com/infobip/mobile-messaging-sdk-ios/wiki/Images/background_modes.png?raw=true" alt="Enable Remote Notifications in Background Modes settings"/>
     
-3. Using <a href="https://guides.cocoapods.org/using/getting-started.html#getting-started" target="_blank">CocoaPods</a>, specify it in your `Podfile`:
+3. Import all targets from https://github.com/infobip/poc-mobile-messaging-spm (MobileMessaging, InAppChat and WebRTCUI):
 
-    ```ruby
-    source 'https://github.com/CocoaPods/Specs.git'
-    platform :ios, '12.0'
-    use_frameworks!
-    pod 'MobileMessaging'
-    ```
-
-    > #### Notice 
-    > CocoaLumberjack logging used by default, in order to use other logging or switch it off follow [this guide](https://github.com/infobip/mobile-messaging-sdk-ios/wiki/How-to-install-the-SDK-without-CocoaLumberjack%3F).
-
-    If you use Carthage, see <a href="https://github.com/infobip/mobile-messaging-sdk-ios/wiki/Integration-via-Carthage" target="_blank">Integration via Carthage</a> guide.
 
 4. Import the library into your AppDelegate file:
 
     ```swift
     // Swift
-    import MobileMessaging
-    ```
-    <details><summary>expand to see Objective-C code</summary>
-    <p>
+  import MobileMessaging
+  import WebRTCUI
+  import InAppChat
 
-    ```objective-c
-    @import MobileMessaging;
     ```
-
-    </p>
-    </details>
 
 5. Start MobileMessaging service using your Infobip Application Code, obtained in step 1, and preferable notification type as parameters:
 
@@ -62,20 +47,6 @@ This guide is designed to get you up and running with Mobile Messaging SDK integ
         ...
     }   
     ```
-
-    <details><summary>expand to see Objective-C code</summary>
-    <p>
-
-    ```objective-c
-    - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-        MMUserNotificationType *userNotificationType = [[MMUserNotificationType alloc] initWithOptions:<#for example @[MMUserNotificationType.alert, MMUserNotificationType.sound]#>;
-        [[MobileMessaging withApplicationCode: <#your application code#> notificationType: userNotificationType] start:nil];
-        ...
-    }
-    ```
-
-    </p>
-    </details>
 
     In case you already use other Push Notifications vendor's SDK, add `withoutRegisteringForRemoteNotifications()` to the start call:
     
@@ -100,20 +71,6 @@ This guide is designed to get you up and running with Mobile Messaging SDK integ
     }
     ```
 
-    <details><summary>expand to see Objective-C code</summary>
-    <p>
-
-    ```objective-c
-    - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
-        [MobileMessaging didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
-
-        // other push vendors might have their code here and handle a Device Token as well
-    }
-    ```
-
-    </p>
-    </details>
-
 7. Add one line of code `MobileMessaging.didReceiveRemoteNotification(userInfo, fetchCompletionHandler: completionHandler)` to your AppDelegate method `application:didReceiveRemoteNotification:fetchCompletionHandler:` in order to send notification's delivery reports to Infobip:
 
     ```swift
@@ -124,20 +81,6 @@ This guide is designed to get you up and running with Mobile Messaging SDK integ
         // other push vendors might have their code here and handle a remove notification as well
     }
     ```
-
-    <details><summary>expand to see Objective-C code</summary>
-    <p>
-
-    ```objective-c
-    - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult result))completionHandler {
-        [MobileMessaging didReceiveRemoteNotification:userInfo fetchCompletionHandler:completionHandler];
-
-        // other push vendors might have their code here and handle a remove notification as well
-    }
-    ```
-
-    </p>
-    </details>
 
 8. [Integrate Notification Service Extension](https://github.com/infobip/mobile-messaging-sdk-ios/wiki/Notification-Service-Extension-for-Rich-Notifications-and-better-delivery-reporting-on-iOS-10) into your app in order to obtain:
     - more accurate processing of messages and delivery stats
