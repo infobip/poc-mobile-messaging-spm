@@ -16,8 +16,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/CocoaLumberjack/CocoaLumberjack.git", from: "3.8.0"),
-        .package(url: "https://github.com/Kitura/Swift-JWT/Swift-JWT.git", from: "4.0.0"),
-        .package(url: "https://github.com/infobip/infobip-rtc-ios/infobip-rtc-ios.git", from: "2.0.20")
+        .package(url: "https://github.com/Kitura/Swift-JWT.git", from: "4.0.0"),
+        .package(url: "https://github.com/infobip/infobip-rtc-ios.git", from: "2.0.20")
     ],
     targets: [
         .target(
