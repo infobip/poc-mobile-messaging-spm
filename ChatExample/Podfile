@@ -1,0 +1,33 @@
+source 'https://github.com/CocoaPods/Specs.git'
+use_frameworks!
+platform :ios, '12.0'
+
+target 'MobileChatExample' do
+	pod 'MobileMessaging', :path => '../'
+	pod 'MobileMessaging/InAppChat', :path => '../'
+  	pod 'MobileMessaging/WebRTCUI', :path => '../'
+	pod 'SwiftJWT', '~> 3.6.1' 
+end
+
+# Fix Xcode 14 resource bundle signing issues
+# https://github.com/CocoaPods/CocoaPods/issues/11402#issuecomment-1259231655
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    shell_script_path = "Pods/Target Support Files/#{target.name}/#{target.name}-frameworks.sh"
+    if File::exist?(shell_script_path)
+      shell_script_input_lines = File.readlines(shell_script_path)
+      shell_script_output_lines = shell_script_input_lines.map { |line| line.sub("source=\"$(readlink \"${source}\")\"", "source=\"$(readlink -f \"${source}\")\"") }
+      File.open(shell_script_path, 'w') do |f|
+        shell_script_output_lines.each do |line|
+          f.write line
+        end
+      end
+    end
+#    if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"
+      target.build_configurations.each do |config|
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+	config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      end
+#    end
+  end
+end

@@ -1,0 +1,192 @@
+# vim:set sw=2 ft=ruby
+fastlane_version "1.68.0"
+default_platform :ios
+
+platform :ios do
+	before_all do
+		match
+		`osascript -e 'tell app "Simulator" to quit'`
+		`osascript -e 'tell app "Xcode" to quit'`
+		sleep(5)
+		ENV["DEVELOPER_DIR"] = "/Applications/Xcode.app"
+		ENV["FASTLANE_EXPLICIT_OPEN_SIMULATOR"] = "2"
+		xcode_select("/Applications/Xcode.app")
+		wait_xcrun
+	end
+
+	desc "Runs all the tests"
+	lane :test do |options|
+		load_keys
+		cocoapods
+		test_on_simulator(options[:no_tests])
+	end
+
+	lane :local_test do |options|
+		cocoapods
+		test_on_simulator(options[:no_tests])
+	end
+
+	desc "Runs all the tests on Simulators"
+	def test_on_simulator(no_tests)
+		begin
+			unless no_tests
+				# scan(
+				# 	skip_build: true,
+				# 	scheme: "MobileMessagingExample",
+				# 	devices: ["iPhone 6 (9.3)"]
+				# 	)
+				# scan(
+				# 	skip_build: true,
+				# 	scheme: "MobileMessagingExample",
+				# 	devices: ["iPhone 7 (10.3.1)"]
+				# 	)
+				# scan(
+				# 	skip_build: true,
+				# 	scheme: "MobileMessagingExample",
+				# 	devices: ["iPhone X (11.4)"]
+				# 	)
+				scan(
+					clean: true,
+					skip_build: false,
+					scheme: "MobileMessagingExample",
+					devices: ["iPhone 11"],
+					code_coverage: true,
+					result_bundle: true
+					)
+			end
+		end
+	end
+
+	desc "Runs all the tests on iPhone 5"
+	def test_on_device(no_tests)
+		begin
+			unless no_tests
+				scan(
+					clean: true,
+					skip_build: false,
+					scheme: "MobileMessagingExample_Tests_Device",
+				destination: "id=f0092e6e876ebb2388e0b7001b2d7d9ffa47e6e1" #iPhone 5
+				)
+			end
+		end
+	end
+
+	def change_log_since_last_tag
+		# http://git-scm.com/docs/pretty-formats
+		# <short hash> <commit title>
+		return changelog_from_git_commits(pretty: '%h %s')
+	end
+
+	def load_keys
+		begin
+			import("keys")
+		rescue => exception
+			UI.important("fastlane/keys file not found. To use this Fastfile, copy fastlane/keys.template into fastlane/keys and fill in the values, will try to use ENV variables")
+			ENV["SIGH_USERNAME"] = ENV["APPLE_ID"]
+			ENV["PILOT_APPLE_ID"] = ENV["APPLE_ID"]
+			ENV["DELIVER_USERNAME"] = ENV["APPLE_ID"]
+		end
+	end
+
+	desc "Build a snapshot version"
+	lane :snapshot_build do |options|
+		load_keys
+		cocoapods(repo_update: true)
+		test_on_simulator(options[:no_tests])
+		test_on_device(options[:no_device_tests])
+
+	end
+
+	desc "Build a release candidate and publish to Cocoapods"
+	lane :release_candidate do |options|
+		release(true, options)
+	end
+
+	desc "Build a release version, publish to Cocoapods"
+	lane :release do |options|
+		release(false, options)
+	end
+
+	def release(is_prerelease, options)
+		begin
+			carthage_xcodeproj_path = "../MobileMessaging.xcodeproj"
+			example_xcodeproj_path = "MobileMessagingExample.xcodeproj"
+			release_notes = options[:release_notes]
+
+			if release_notes.to_s.strip.empty?
+				desc "You have not provided release notes!"
+				return
+			end
+
+			load_keys
+
+			ensure_git_status_clean
+
+			unless options[:version_number] or options[:release_type]
+				UI.error("You must specify :release_type (patch, minor, major) or a full version string in :version_number")
+				raise "You must specify :release_type (patch, minor, major) or a full version string in :version_number"
+			end
+
+			custom_version_number = options[:version_number]
+			if !(custom_version_number.nil? || custom_version_number.empty?)
+				increment_version_number(version_number: custom_version_number)
+			else
+				increment_version_number(bump_type: options[:release_type])
+			end
+
+			new_version_number = lane_context[SharedValues::VERSION_NUMBER]
+			new_build_number = increment_build_number
+
+			increment_version_number(version_number: new_version_number, xcodeproj: carthage_xcodeproj_path)
+			increment_build_number(build_number: new_build_number, xcodeproj: carthage_xcodeproj_path)
+
+			new_version_tag = "#{new_version_number}"
+
+			cocoapods
+
+			test_on_simulator(options[:no_tests])
+			test_on_device(options[:no_device_tests])
+
+			clean_build_artifacts
+			branch = ENV["BRANCH_NAME_TO_BUILD"]
+			change_log = change_log_since_last_tag
+			workspace = ENV["WORKSPACE"]
+			podspec_path = "#{workspace}/MobileMessaging.podspec"
+			swift_version_path = "#{workspace}/Classes/Core/MMVersion.swift"
+			tagged_commit_msg = "Version bump for SDK: #{new_version_number}"
+
+			commit_version_bump(force: true, message: "Version bump for example project: #{new_version_number}", xcodeproj: example_xcodeproj_path)
+			commit_version_bump(force: true, message: tagged_commit_msg, xcodeproj: carthage_xcodeproj_path)
+
+			desc "Comitting podspec and global var version changes"
+			version_bump_podspec(path: podspec_path, version_number: new_version_number)
+			sh "perl -i -p -e 's/(?<=\")\\d+(?:.\\d+)+(?=\")/#{new_version_number}/g;' #{swift_version_path}"
+			sh "git commit --amend -m \"#{tagged_commit_msg}\" \"#{podspec_path}\" \"#{swift_version_path}\""
+
+			desc "Tagging"
+			sh "git tag #{new_version_tag}"
+
+			desc "Pushing to Stash repo"
+			sh "git push origin HEAD:#{branch} --tags"
+
+			unless options[:no_github]
+				desc "Pushing to Github repo"
+				sh "git push github -f HEAD:#{branch} --tags"
+
+				set_github_release(
+					description: release_notes,
+					repository_name: "infobip/mobile-messaging-sdk-ios",
+					api_token: ENV["GITHUB_API_TOKEN"],
+					tag_name: new_version_number,
+					name: new_version_number,
+					is_prerelease: is_prerelease
+					)
+
+				pod_push(
+					path: podspec_path,
+					allow_warnings: true
+					)
+			end
+		end
+	end
+end

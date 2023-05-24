@@ -1,0 +1,72 @@
+PODS:
+  - BlueCryptor (1.0.32)
+  - BlueECC (1.2.5)
+  - BlueRSA (1.0.200)
+  - CocoaLumberjack/Core (3.7.4)
+  - CocoaLumberjack/Swift (3.7.4):
+    - CocoaLumberjack/Core
+  - IBGoogleWebRTC (1.0.37785)
+  - InfobipRTC (2.0.8):
+    - IBGoogleWebRTC (~> 1.0.37785)
+  - KituraContracts (1.2.1):
+    - LoggerAPI (~> 1.7)
+  - LoggerAPI (1.9.200):
+    - Logging (~> 1.1)
+  - Logging (1.4.0)
+  - MobileMessaging (10.17.0):
+    - MobileMessaging/CocoaLumberjack (= 10.17.0)
+  - MobileMessaging/CocoaLumberjack (10.17.0):
+    - CocoaLumberjack/Swift (= 3.7.4)
+    - MobileMessaging/Core
+  - MobileMessaging/Core (10.17.0)
+  - MobileMessaging/InAppChat (10.17.0):
+    - MobileMessaging/Core
+  - MobileMessaging/WebRTCUI (10.17.0):
+    - InfobipRTC (= 2.0.8)
+    - MobileMessaging/Core
+  - SwiftJWT (3.6.200):
+    - BlueCryptor (~> 1.0)
+    - BlueECC (~> 1.1)
+    - BlueRSA (~> 1.0)
+    - KituraContracts (~> 1.2)
+    - LoggerAPI (~> 1.7)
+
+DEPENDENCIES:
+  - MobileMessaging (from `../`)
+  - MobileMessaging/InAppChat (from `../`)
+  - MobileMessaging/WebRTCUI (from `../`)
+  - SwiftJWT (~> 3.6.1)
+
+SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - BlueCryptor
+    - BlueECC
+    - BlueRSA
+    - CocoaLumberjack
+    - IBGoogleWebRTC
+    - InfobipRTC
+    - KituraContracts
+    - LoggerAPI
+    - Logging
+    - SwiftJWT
+
+EXTERNAL SOURCES:
+  MobileMessaging:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  BlueCryptor: b0aee3d9b8f367b49b30de11cda90e1735571c24
+  BlueECC: 0d18e93347d3ec6d41416de21c1ffa4d4cd3c2cc
+  BlueRSA: dfeef51db96bcc4edec654956c1581adbda4e6a3
+  CocoaLumberjack: 543c79c114dadc3b1aba95641d8738b06b05b646
+  IBGoogleWebRTC: 38846dd4c2ac0c14f9307252daab367e566b8632
+  InfobipRTC: 34b4716497a0783758fe4bad714138b72a7eca60
+  KituraContracts: e845e60dc8627ad0a76fa55ef20a45451d8f830b
+  LoggerAPI: ad9c4a6f1e32f518fdb43a1347ac14d765ab5e3d
+  Logging: beeb016c9c80cf77042d62e83495816847ef108b
+  MobileMessaging: 5e9ac6c6017f243c1832546d609e97ccb8081bb2
+  SwiftJWT: 88c412708f58c169d431d344c87bc79a87c830ae
+
+PODFILE CHECKSUM: 563dab8cb371cdfd07ffb07468cee6114a74f5e7
+
+COCOAPODS: 1.12.1
