@@ -16,7 +16,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/CocoaLumberjack/CocoaLumberjack.git", from: "3.8.0"),
-        .package(url: "https://github.com/infobip/infobip-rtc-ios/", from: "2.0.10")
     ],
     targets: [
         .target(
@@ -37,7 +36,9 @@ let package = Package(
         /// InAppChat
         .target(
             name: "InAppChat",
-            dependencies: ["MobileMessaging"],
+            dependencies: ["MobileMessaging",
+                .product(name: "SwiftJWT", package: "Swift-JWT")
+            ],
             path: "Classes/Chat",
             resources: [.copy("Resources/ChatConnector.html"), .process("Resources/MobileMessagingChatImages.xcassets")]
         ),
@@ -46,8 +47,7 @@ let package = Package(
             name: "WebRTCUI",
             dependencies: [
                 "MobileMessaging",
-                .product(name: "InfobipRTC", package: "infobip-rtc-ios"),
-                .product(name: "WebRTC", package: "infobip-rtc-ios")
+                .product(name: "InfobipRTC", package: "infobip-rtc-ios")
             ],
             path: "Classes/WebRTCUI",
             resources: [.process("Resources")],
