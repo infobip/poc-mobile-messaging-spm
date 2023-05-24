@@ -31,17 +31,14 @@ This guide is designed to get you up and running with Mobile Messaging SDK integ
 4. Import the library into your AppDelegate file:
 
     ```swift
-    // Swift
-  import MobileMessaging
-  import WebRTCUI
-  import InAppChat
-
+    import MobileMessaging
+    import WebRTCUI
+    import InAppChat
     ```
 
 5. Start MobileMessaging service using your Infobip Application Code, obtained in step 1, and preferable notification type as parameters:
 
     ```swift
-    // Swift
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         MobileMessaging.withApplicationCode(<#your application code#>, notificationType: <#for example MMUserNotificationType(options: [.alert, .sound])#>)?.start()
         ...
@@ -51,7 +48,6 @@ This guide is designed to get you up and running with Mobile Messaging SDK integ
     In case you already use other Push Notifications vendor's SDK, add `withoutRegisteringForRemoteNotifications()` to the start call:
     
     ```swift
-    // Swift
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         MobileMessaging.withApplicationCode(<#your application code#>, notificationType: <#for example MMUserNotificationType(options: [.alert, .sound])#>)?.withoutRegisteringForRemoteNotifications()?.start()
         ...
