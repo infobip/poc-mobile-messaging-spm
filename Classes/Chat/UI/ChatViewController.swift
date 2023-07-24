@@ -8,6 +8,7 @@
 import WebKit
 import UIKit
 import MobileMessaging
+
 ///Key component to use for displaying In-app chat view.
 ///We support two ways to quickly embed it into your own application:
 /// - via Interface Builder: set it as `Custom class` for your view controller object.
@@ -43,6 +44,26 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
     
     var webView: ChatWebView!
     private var chatWidget: ChatWidget?
+
+    public var messagesViewFrame: CGRect {
+        set {
+            webView.frame = newValue
+        }
+
+        get {
+            return webView.frame
+        }
+    }
+
+    public var chatInputViewFrame: CGRect {
+        set {
+            composeBarView.frame = newValue
+        }
+
+        get {
+            return composeBarView.frame
+        }
+    }
     
     override var scrollView: UIScrollView! {
         return webView.scrollView
@@ -73,8 +94,12 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
         webView.backgroundColor = bckgColor
         webView.isOpaque = false
         view.backgroundColor = bckgColor
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(appBecomeActive), name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(appBecomeInactive), name: UIApplication.didEnterBackgroundNotification, object: nil)
+
     }
-    
+
     open override func viewWillDisappear(_ animated: Bool) {
         draftPostponer.postponeBlock(delay: 0) { [weak self] in
             if let composeBar = self?.composeBarView as? ComposeBar {
@@ -126,40 +151,9 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
         guard let settings = settings else {
             return
         }
-        
-        if #available(iOS 13.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.configureWithOpaqueBackground()
-            
-            if let navBarColor = settings.navBarColor {
-                appearance.backgroundColor = navBarColor
-            }
-            
-            if let navBarTitleColor = settings.navBarTitleColor {
-                appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: navBarTitleColor]
-            }
-            navigationController?.navigationBar.standardAppearance = appearance
-            navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        } else {
-            navigationController?.navigationBar.isTranslucent = false
-            
-            if let navBarColor = settings.navBarColor {
-                navigationController?.navigationBar.backgroundColor = navBarColor
-            }
-            
-            if let navBarTitleColor = settings.navBarTitleColor {
-                navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : navBarTitleColor]
-            }
-        }
-        
-        if let navBarColor = settings.navBarColor {
-            navigationController?.navigationBar.barTintColor = navBarColor
-        }
-        
-        if let navBarItemsTintColor = settings.navBarItemsTintColor {
-            navigationController?.navigationBar.tintColor = navBarItemsTintColor
-        }
-        
+
+        setNavBarBranding(settings)
+
         title = settings.title
         
         if let sendButtonTintColor = settings.sendButtonTintColor,
@@ -173,6 +167,42 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
         let bckgColor = settings.backgroungColor ?? .white
         webView.backgroundColor = bckgColor
         view.backgroundColor = bckgColor
+    }
+
+    private func setNavBarBranding(_ settings: MMChatSettings) {
+        guard MMChatSettings.sharedInstance.shouldSetNavBarAppearance else { return }
+        if #available(iOS 13.0, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+
+            if let navBarColor = settings.navBarColor {
+                appearance.backgroundColor = navBarColor
+            }
+
+            if let navBarTitleColor = settings.navBarTitleColor {
+                appearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: navBarTitleColor]
+            }
+            navigationController?.navigationBar.standardAppearance = appearance
+            navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        } else {
+            navigationController?.navigationBar.isTranslucent = false
+
+            if let navBarColor = settings.navBarColor {
+                navigationController?.navigationBar.backgroundColor = navBarColor
+            }
+
+            if let navBarTitleColor = settings.navBarTitleColor {
+                navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.foregroundColor : navBarTitleColor]
+            }
+        }
+
+        if let navBarColor = settings.navBarColor {
+            navigationController?.navigationBar.barTintColor = navBarColor
+        }
+
+        if let navBarItemsTintColor = settings.navBarItemsTintColor {
+            navigationController?.navigationBar.tintColor = navBarItemsTintColor
+        }
     }
 
     public func showThreadsList() {
@@ -194,6 +224,17 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
             dismiss(animated: true) // viewController is a modal
         } else {
             navigationController?.popViewController(animated: true) // regular presentation
+        }
+    }
+    
+    public func stopConnection() {
+        webView.load(URLRequest(url: URL(string: "about:blank")!))
+    }
+    
+    public func restartConnection() {
+        if let chatWidget = chatWidget {
+            stopConnection()
+            didLoadWidget(chatWidget)
         }
     }
     
@@ -228,7 +269,17 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
         let cssScript = WKUserScript(source: script, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
         webView.configuration.userContentController.addUserScript(cssScript)
     }
-    
+
+    public func setLanguage(_ language: MMLanguage, completion: @escaping (_ error: NSError?) -> Void) {
+        weak var wWebView = webView
+        guard let wWebView = wWebView else {
+            MMLanguage.sessionLanguage = language
+            completion(nil)
+            return
+        }
+        wWebView.setLanguage(language, completion: completion)
+    }
+
     func didEnableControls(_ enabled: Bool) {
         webView.isUserInteractionEnabled = enabled
         webView.isLoaded = enabled
@@ -243,7 +294,7 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
     override var isComposeBarVisible: Bool {
         didSet {
             if oldValue != isComposeBarVisible {
-                self.setComposeBarVisibility(isVisible: self.isComposeBarVisible)
+                setComposeBarVisibility(isVisible: isComposeBarVisible)
             } else if !isComposeBarVisible && !composeBarView.isHidden {
                 // In some cases (ie the first time a multithread widget is loaded), we want to hide the
                 // composer without animation.
@@ -293,6 +344,7 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
     }
     
     override func keyboardWillShow(_ duration: TimeInterval, curve: UIView.AnimationCurve, options: UIView.AnimationOptions, height: CGFloat) {
+        guard MMChatSettings.sharedInstance.shouldHandleKeyboardAppearance else { return }
         if composeBarView.isFirstResponder {
             super.keyboardWillShow(duration, curve: curve, options: options,
                                    height: height + (isComposeBarVisible ? composeBarView.bounds.height : 0)
@@ -301,6 +353,7 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
     }
     
     override func keyboardWillHide(_ duration: TimeInterval, curve: UIView.AnimationCurve, options: UIView.AnimationOptions, height: CGFloat) {
+        guard MMChatSettings.sharedInstance.shouldHandleKeyboardAppearance else { return }
         super.keyboardWillHide(duration, curve: curve, options: options,
                                height: (isComposeBarVisible ? composeBarView.bounds.height : 0) + self.safeAreaInsets.bottom
         )
@@ -340,6 +393,13 @@ open class MMChatViewController: MMMessageComposingViewController, ChatWebViewDe
         self.view.addSubview(self.chatNotAvailableLabel)
     }
     
+    @objc private func appBecomeActive() {
+        restartConnection()
+    }
+    
+    @objc private func appBecomeInactive() {
+        stopConnection()
+    }
     /// Method for sending metadata to conversations backend. It can be called any time, many times, but once the chat has started and is presented.
     /// The format of the metadata must be that of Javascript objects and values (for guidance, it must be a string accepted by JSON.stringify()
     /// The multiThreadStrategy is entirely optional and we recommented to leave as default ACTIVE.

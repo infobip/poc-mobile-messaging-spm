@@ -105,6 +105,7 @@ class AttachmentPreviewController: MMModalDismissableViewController, ChatSetting
     }
     
     func applySettings() {
+        guard MMChatSettings.sharedInstance.shouldSetNavBarAppearance else { return }
         let settings = MMChatSettings.sharedInstance
         let backgroundTint = settings.attachmentPreviewBarsColor ?? UIColor.black
         let itemsTint = settings.attachmentPreviewItemsColor ?? UIColor.white
