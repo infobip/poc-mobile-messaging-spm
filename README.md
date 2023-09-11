@@ -1,4 +1,4 @@
-Note: Proof of concept of Mobile Messaging iOS SDK with Swift Package support. Only InAppChat and WebRTCUI are included. Not for production use.
+DEPRECATED: SPM is now officially supported by <a href="https://github.com/infobip/mobile-messaging-sdk-ios" target="_blank">Infobip Mobile Messaging SDK</a>. This POC repository is obsolete and will be soon removed.
 
 # Mobile Messaging SDK for iOS
 
